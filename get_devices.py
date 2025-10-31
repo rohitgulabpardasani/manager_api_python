@@ -1,31 +1,51 @@
-# file: list_devices_with_model.py
 import requests
 import urllib3
+import json
 
-# --- your vManage info ---
-VMANAGE = "https://10.10.10.101"
-USERNAME = "admin"
-PASSWORD = "C1sc0123!"
-# --------------------------
+# ============================================
+# 🔧 STUDENT TODO SECTION — FILL THESE VALUES 🔧
+# ============================================
 
-# ignore certificate warnings (lab only)
+# 1️⃣  vManage connection info
+VMANAGE  = ""    		   
+USERNAME = ""                      
+PASSWORD = ""                      
+
+# 2️⃣  Login and API endpoints
+login_url =     # Define the j_security_check for authentication
+data = {                                     # Define j_username and j_password keys
+}
+url =         # Refer to the API docs to extract the Endpoint + Resource URL
+
+# ============================================
+# ⚙️ DO NOT MODIFY BELOW THIS LINE
+# ============================================
+
+# Ignore certificate warnings (lab only)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# 1. login
+# --- STEP 1: LOGIN ---
 session = requests.Session()
-login_url = f"{VMANAGE}/j_security_check"
-data = {"j_username": USERNAME, "j_password": PASSWORD}
 resp = session.post(login_url, data=data, verify=False)
 
-if "JSESSIONID" not in resp.cookies:
-    print("Login failed! Check credentials or URL.")
-    exit()
+if "JSESSIONID" not in session.cookies.get_dict():
+    print("❌ Login failed! Check your credentials or vManage URL.")
+    print(resp.text[:200])
+    raise SystemExit(1)
+else:
+    print("✅ Login successful!")
 
-# 2. get all devices
-url = f"{VMANAGE}/dataservice/device"
-devices = session.get(url, verify=False).json().get("data", [])
+# Handle XSRF token if required
+xsrf = session.cookies.get("XSRF-TOKEN")
+headers = {"X-XSRF-TOKEN": xsrf} if xsrf else {}
 
-# 3. print results
+# --- STEP 2: GET ALL DEVICES ---
+response = session.get(url, headers=headers, verify=False)
+
+# Parse device list
+devices = response.json().get("data", [])
+
+# --- STEP 3: DISPLAY RESULTS ---
 print(f"{'TYPE':10} {'HOSTNAME':15} {'SYSTEM-IP':15} {'REACH':10} {'MODEL/PLATFORM'}")
 for d in devices:
     dev_type = d.get("device-type") or d.get("personality") or ""
@@ -36,6 +56,8 @@ for d in devices:
         or d.get("model")
         or ""
     )
-    print(f"{dev_type:10} {d.get('host-name',''):15} {d.get('system-ip',''):15} "
-          f"{d.get('reachability',''):10} {model}")
+    print(
+        f"{dev_type:10} {d.get('host-name',''):15} {d.get('system-ip',''):15} "
+        f"{d.get('reachability',''):10} {model}"
+    )
 
