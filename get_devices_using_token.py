@@ -10,7 +10,6 @@ import json
 VMANAGE  = ""
 TOKEN    = ""                 # e.g. "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
-
 # 2️⃣  API endpoint for the resource you want to access
 URL =           # Refer to the API docs to extract the Endpoint + Resource URL
 
